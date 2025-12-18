@@ -39,20 +39,52 @@ def transform_crimes(df, year):
             })
     return pd.DataFrame(records).groupby(["code_insee", "year"], as_index=False).sum()
 
+
 def ai_analysis(df, user_prompt=None):
-    summary = df[["name", "crime_count", "population"]].dropna().to_string(index=False)
-    if user_prompt:
-        prompt = f"{summary}\n\nQuestion de l'utilisateur : {user_prompt}"
+    """
+    Returns AI analysis text for the given dataframe or a user question.
+    Works safely with OpenRouter/Mistral response format.
+    """
+    # Build prompt
+    if user_prompt is None:
+        prompt = (
+            "Fais un rapport synthétique sur les données de criminalité suivantes :\n\n"
+            f"{df[['name','crime_count','population']].to_string(index=False)}"
+        )
     else:
-        prompt = f"Analyse les données suivantes et produis un rapport synthétique.\n{summary}"
+        prompt = user_prompt
 
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
+
     payload = {
         "model": MODEL,
-        "messages": [{"role": "user", "content": prompt}]
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.3,
+        "max_tokens": 500
     }
-    r = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=60)
-    return r.json()["choices"][0]["message"]["content"]
+
+    try:
+        resp = requests.post(OPENROUTER_URL, headers=headers, json=payload)
+        resp_json = resp.json()
+
+        # OpenRouter sometimes returns 'choices' as a list of dicts
+        choices = resp_json.get("choices", [])
+        if not choices:
+            return "L'IA n'a pas renvoyé de réponse. Essayez de poser une question plus détaillée."
+
+        choice = choices[0]
+
+        # Some versions: choice has 'message' -> 'content'
+        if "message" in choice and "content" in choice["message"]:
+            return choice["message"]["content"].strip()
+        # Some versions: choice has 'text' directly
+        elif "text" in choice:
+            return choice["text"].strip()
+        # Otherwise
+        return "L'IA n'a pas renvoyé de réponse. Essayez de poser une question plus détaillée."
+
+    except Exception as e:
+        return f"L'IA n'a pas pu générer de réponse: {e}"
