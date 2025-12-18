@@ -1,0 +1,1 @@
+pip install --upgrade pip ipykernel jupyter pandas numpy matplotlib seaborn geopandas plotly folium xlrd openpyxl
