@@ -149,7 +149,7 @@ with content_col:
     # -----------------------------
     # Evolution over time
     # -----------------------------
-    st.markdown("<div class='section-header'>📈 Évolution du taux de criminalité</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-header'> Évolution du taux de criminalité</div>", unsafe_allow_html=True)
     # Only sum numeric columns excluding 'year' to avoid errors
     numeric_cols = df.select_dtypes(include='number').columns.drop('year')
     df_numeric = df.groupby("year")[numeric_cols].sum().reset_index()
