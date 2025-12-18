@@ -1,1 +1,2 @@
-pip install --upgrade pip ipykernel jupyter pandas numpy matplotlib seaborn geopandas plotly folium xlrd openpyxl
+python -m ensurepip --upgrade
+python -m pip install ipykernel jupyter pandas numpy matplotlib seaborn geopandas plotly folium xlrd openpyxl
