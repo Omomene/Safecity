@@ -43,7 +43,6 @@ def run():
     df = df.merge(crimes, on="code_insee", how="left")
     print(f"Data merged. Shape: {df.shape}")
 
-    # Ensure correct column names for AI analysis
     if "nom" in df.columns:
         df.rename(columns={"nom": "name"}, inplace=True)
     elif "name" not in df.columns:
@@ -54,11 +53,9 @@ def run():
     elif "population" not in df.columns:
         df["population"] = 0
 
-    # Fill missing values
     df["crime_count"] = df["crime_count"].fillna(0)
     df["population"] = df["population"].fillna(0)
 
-    # Avoid division by zero
     df["crime_rate"] = df.apply(
         lambda row: row["crime_count"] / row["population"] * 100000 if row["population"] > 0 else 0,
         axis=1
