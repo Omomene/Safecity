@@ -5,7 +5,6 @@ from pipeline.config import OPENROUTER_API_KEY, OPENROUTER_URL, MODEL
 def transform_population(df):
     df = df.dropna(how="all").reset_index(drop=True)
     
-    # Find the first row with department codes
     for i, row in df.iterrows():
         if str(row[0]).isdigit():
             df_data = df.iloc[i:].copy()
@@ -16,7 +15,6 @@ def transform_population(df):
     df_data = df_data.reset_index(drop=True)
     df_data = df_data.iloc[:, [0, 1, -1]]
     
-    # Rename to standard 'population' column
     df_data.columns = ["code_insee", "nom", "population"]
     df_data["code_insee"] = df_data["code_insee"].astype(str).str.zfill(2)
     df_data["population"] = pd.to_numeric(df_data["population"], errors="coerce")
@@ -45,7 +43,7 @@ def ai_analysis(df, user_prompt=None):
     Returns AI analysis text for the given dataframe or a user question.
     Works safely with OpenRouter/Mistral response format.
     """
-    # Build prompt
+    
     if user_prompt is None:
         prompt = (
             "Fais un rapport synthétique sur les données de criminalité suivantes :\n\n"
@@ -70,20 +68,18 @@ def ai_analysis(df, user_prompt=None):
         resp = requests.post(OPENROUTER_URL, headers=headers, json=payload)
         resp_json = resp.json()
 
-        # OpenRouter sometimes returns 'choices' as a list of dicts
         choices = resp_json.get("choices", [])
         if not choices:
             return "L'IA n'a pas renvoyé de réponse. Essayez de poser une question plus détaillée."
 
         choice = choices[0]
 
-        # Some versions: choice has 'message' -> 'content'
         if "message" in choice and "content" in choice["message"]:
             return choice["message"]["content"].strip()
-        # Some versions: choice has 'text' directly
+
         elif "text" in choice:
             return choice["text"].strip()
-        # Otherwise
+
         return "L'IA n'a pas renvoyé de réponse. Essayez de poser une question plus détaillée."
 
     except Exception as e:
